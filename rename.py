@@ -3,12 +3,12 @@ import os
 import re
 
 path = 'C:/Projekte/AU40x_HK_Crashpaket_ARG3_Step2_VIBN/6590R01_Backup_test'
-p_declare_list = ['    !**********************************************************', '    !*            Fuegepunkt-Deklarationen', '    !**********************************************************']
-r_declare_list = ['    !**********************************************************', '    !*            Raumpunkt-Deklarationen', '    !**********************************************************']
+p_declare_list = ['    !**********************************************************\n', '    !*            Fuegepunkt-Deklarationen\n', '    !**********************************************************\n']
+r_declare_list = ['    !**********************************************************\n', '    !*            Raumpunkt-Deklarationen\n', '    !**********************************************************\n']
 
 class pointClass:
     spaces = "    "
-    prename = "    LOCAL CONST robtarget"
+    prename = "LOCAL CONST robtarget"
     name = ""
     coordinates = ""
 
@@ -61,6 +61,7 @@ def renameRPoints(lines, r_points, pre="x", step=10, start=10):
         p_name_new = f'{pre}{p_number}'
         for i, line in enumerate(file1):
             pattern = rf'{point}[:|,]'
+            # file deepcode ignore change_to_is: <please specify a reason of ignoring this>
             if re.search(pattern, line) != None:
                 file1[i] = line.replace(point, p_name_new)
         p_number += step   
@@ -72,23 +73,57 @@ def readfile(fpath):
         lines = f.readlines()
     return lines
 
-def sort(file, p_declare, r_declare, p_points, ):
-    new_file = file
-    start = False
-    ii = 0
-    p_declare_done = False
+def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
+    new_file = list()
+    start_line = 0
+    stop_line = 0
+    start_pattern = r'[!][*]'
+    stop_pattern = r'[p|!][r|#]'
+    f_done = False
+    r_done = False
     for i, line in enumerate(file):
-        if i == 3:
-            start = True
-        if start == True:
-            if ii <= 2 & p_declare_done == False:
-                new_file[i] = p_declare[ii]
-                if ii == 2:
-                    p_declare_done = True
-                ii += 1
-        if p_declare_done:
-            for p_point in p_points:
-                pass
+        if bool(re.search(start_pattern, line)):
+            if start_line == 0:
+                start_line = i
+        if bool(re.search(stop_pattern, line)):
+            if stop_line == 0:
+                stop_line = i
+                break
+    for i, line in enumerate(file):
+        if i >= start_line and i <= stop_line:
+            if f_done == False:
+                for l in p_declare:
+                    new_file.append(l)
+                for p in p_points:
+                    for coord in coordiantes:
+                        if bool(re.search(p, coord.name)):
+                            new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
+                            break
+                new_file.append("\n")
+                f_done = True
+            elif r_done == False:
+                for l in r_declare:
+                    new_file.append(l)
+                for r in r_points:
+                    for coord in coordiantes:
+                        if bool(re.search(r, coord.name)):
+                            new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
+                            break
+                new_file.append("\n")
+                r_done = True
+        else:
+            new_file.append(line)
+    return new_file
+            
+def writeNewFile(prepath, path, lines):
+    pre = f"{prepath}/new/"
+    try:
+        os.makedirs(pre)
+    except:
+        print("folder already exists")
+    file = os.path.join(pre, path)
+    with open(file, 'w') as f:
+        f.writelines(lines)
     
 for file in os.listdir(path):
     if file.endswith(".mod"):
@@ -100,6 +135,10 @@ for file in os.listdir(path):
         new_x_file = renameRPoints(org_file, points,"x",10,10)
         x_points = getPoints(new_x_file)
         new_file = renameRPoints(new_x_file, x_points,"p",10,10)
+        new_points = getPoints(new_file)
+        new_coordiantes = getCoordiantes(new_file)
+        test_file = sort(new_file, p_declare_list, r_declare_list, p_points, new_points, new_coordiantes)
+        writeNewFile(path, file, test_file)
         print("done")
         
 
