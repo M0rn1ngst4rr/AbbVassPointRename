@@ -62,7 +62,6 @@ def renameRPoints(lines, r_points, pre="x", step=10, start=10):
         p_name_new = f'{pre}{p_number}'
         for i, line in enumerate(file1):
             pattern = rf'{point}[:|,]'
-            # file deepcode ignore change_to_is: <please specify a reason of ignoring this>
             if re.search(pattern, line) != None:
                 file1[i] = line.replace(point, p_name_new)
         p_number += step   
