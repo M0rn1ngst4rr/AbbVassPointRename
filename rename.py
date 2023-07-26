@@ -2,7 +2,8 @@
 import os
 import re
 
-path = 'C:/Projekte/AU40x_HK_Crashpaket_ARG3_Step2_VIBN/6590R01_Backup_test'
+start_path=os.getcwd()
+path = os.path.join(start_path, '/Modules')
 p_declare_list = ['    !**********************************************************\n', '    !*            Fuegepunkt-Deklarationen\n', '    !**********************************************************\n']
 r_declare_list = ['    !**********************************************************\n', '    !*            Raumpunkt-Deklarationen\n', '    !**********************************************************\n']
 
