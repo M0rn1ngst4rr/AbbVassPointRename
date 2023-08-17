@@ -3,7 +3,7 @@ import os
 import re
 
 start_path=os.getcwd()
-path = os.path.join(start_path, '/Modules')
+path = os.path.join(start_path, 'Modules')
 p_declare_list = ['    !**********************************************************\n', '    !*            Fuegepunkt-Deklarationen\n', '    !**********************************************************\n']
 r_declare_list = ['    !**********************************************************\n', '    !*            Raumpunkt-Deklarationen\n', '    !**********************************************************\n']
 
