@@ -15,9 +15,39 @@ class pointClass:
 
 def getProcessPoints(lines):
     pattern = r"[N|C|K][Z|E][_][P|L][T|I][P|N]"
+    pattern2 = r"Move"
+    pattern3 = r"[S][e][a][r][c][h][L][I][N][_][M]"
+    pattern4 = r"[O][f|F][f|F]"
+    pattern5 = r"pInPos"
     points = list()
     for line in lines:
         if re.search(pattern, line) != None:
+            # trim spaces at the start
+            line = line.strip()
+            # get after space
+            splitted = line.split(" ")
+            name = splitted[1].split(",")[0].split("\\")[0]
+            points.append(name)
+        elif re.search(pattern2, line) != None:
+            test = re.search(pattern4, line)
+            test2 = re.search(pattern5, line, re.IGNORECASE)
+            if test != None:
+                # trim spaces at the start
+                line = line.strip()
+                # get after space
+                splitted = line.split(" ")
+                name = splitted[1].split(",")[0].split("(")[1].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name) 
+            elif test2 != None:
+                # trim spaces at the start
+                line = line.strip()
+                # get after space
+                splitted = line.split(" ")
+                name = splitted[1].split(",")[0].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name) 
+        elif re.search(pattern3, line) != None:
             # trim spaces at the start
             line = line.strip()
             # get after space
@@ -28,19 +58,25 @@ def getProcessPoints(lines):
 
 def getPoints(lines):
     pattern = "Move"
+    pattern2 = r"[OFFS]"
+    pattern3 = r"pinpos"
     points = list()
     for line in lines:
         if re.search(pattern, line) != None:
-            # trim spaces at the start
-            line = line.strip()
-            # get after space
-            splitted = line.split(" ")
-            name = splitted[1].split(",")[0]
-            points.append(name) 
+            test1 = re.search(pattern2, line)
+            test2 = re.search(pattern3, line, re.IGNORECASE)
+            if test1 == None and test2 == None:
+                # trim spaces at the start
+                line = line.strip()
+                # get after space
+                splitted = line.split(" ")
+                name = splitted[1].split(",")[0]
+                points.append(name) 
     return points               
 
 def getCoordiantes(lines):
     pattern = "LOCAL CONST robtarget"
+    pattern2 = "LOCAL VAR robtarget"
     coordianteslist = list()
     for line in lines:
         if re.search(pattern, line) != None:
@@ -52,6 +88,17 @@ def getCoordiantes(lines):
             point = pointClass()
             point.name = name
             point.coordinates = coords
+            coordianteslist.append(point)
+        elif re.search(pattern2, line) != None:
+            # trim spaces at the start
+            line = line.strip()
+            spacesplited = line.split(" ")
+            name = spacesplited[3].split(":")[0]
+            coords = spacesplited[3].split(":")[1].replace("=","")
+            point = pointClass()
+            point.name = name
+            point.coordinates = coords
+            point.prename = "LOCAL VAR robtarget"
             coordianteslist.append(point)
     return coordianteslist
     
@@ -96,7 +143,7 @@ def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
                     new_file.append(l)
                 for p in p_points:
                     for coord in coordiantes:
-                        if bool(re.search(p, coord.name)):
+                        if bool(re.search(p, coord.name, re.IGNORECASE)):
                             new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
                             break
                 new_file.append("\n")
@@ -141,5 +188,3 @@ for file in os.listdir(path):
         writeNewFile(path, file, test_file)
         print("done")
         
-
-    
