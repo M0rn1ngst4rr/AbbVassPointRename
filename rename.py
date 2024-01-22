@@ -1,6 +1,7 @@
 #read in file
 import os
 import re
+import time
 
 start_path=os.getcwd()
 path = os.path.join(start_path, 'Modules')
@@ -14,22 +15,23 @@ class pointClass:
     coordinates = ""
 
 def getProcessPoints(lines):
-    pattern = r"[N|C|K][Z|E][_][P|L][T|I][P|N]"
+    # SM, KE, CZ, KL, KE
+    pattern = r"[N|C|K|S][Z|E|L|M][_][P|L][T|I][P|N]"
     pattern2 = r"Move"
     pattern3 = r"[S][e][a][r][c][h][L][I][N][_][M]"
     pattern4 = r"[O][f|F][f|F]"
     pattern5 = r"pInPos"
     points = list()
     for line in lines:
-        if re.search(pattern, line) != None:
+        if re.search(pattern, line, re.IGNORECASE) != None:
             # trim spaces at the start
             line = line.strip()
             # get after space
             splitted = line.split(" ")
             name = splitted[1].split(",")[0].split("\\")[0]
             points.append(name)
-        elif re.search(pattern2, line) != None:
-            test = re.search(pattern4, line)
+        elif re.search(pattern2, line, re.IGNORECASE) != None:
+            test = re.search(pattern4, line, re.IGNORECASE)
             test2 = re.search(pattern5, line, re.IGNORECASE)
             if test != None:
                 # trim spaces at the start
@@ -47,7 +49,7 @@ def getProcessPoints(lines):
                 name = splitted[1].split(",")[0].split("\\")[0]
                 if not points.__contains__(name):
                     points.append(name) 
-        elif re.search(pattern3, line) != None:
+        elif re.search(pattern3, line, re.IGNORECASE) != None:
             # trim spaces at the start
             line = line.strip()
             # get after space
@@ -58,12 +60,12 @@ def getProcessPoints(lines):
 
 def getPoints(lines):
     pattern = "Move"
-    pattern2 = r"[OFFS]"
+    pattern2 = r"[O][F][F][S]"
     pattern3 = r"pinpos"
     points = list()
     for line in lines:
-        if re.search(pattern, line) != None:
-            test1 = re.search(pattern2, line)
+        if re.search(pattern, line, re.IGNORECASE) != None:
+            test1 = re.search(pattern2, line, re.IGNORECASE)
             test2 = re.search(pattern3, line, re.IGNORECASE)
             if test1 == None and test2 == None:
                 # trim spaces at the start
@@ -71,7 +73,8 @@ def getPoints(lines):
                 # get after space
                 splitted = line.split(" ")
                 name = splitted[1].split(",")[0]
-                points.append(name) 
+                if not points.__contains__(name):
+                    points.append(name) 
     return points               
 
 def getCoordiantes(lines):
@@ -79,7 +82,7 @@ def getCoordiantes(lines):
     pattern2 = "LOCAL VAR robtarget"
     coordianteslist = list()
     for line in lines:
-        if re.search(pattern, line) != None:
+        if re.search(pattern, line, re.IGNORECASE) != None:
             # trim spaces at the start
             line = line.strip()
             spacesplited = line.split(" ")
@@ -89,7 +92,7 @@ def getCoordiantes(lines):
             point.name = name
             point.coordinates = coords
             coordianteslist.append(point)
-        elif re.search(pattern2, line) != None:
+        elif re.search(pattern2, line, re.IGNORECASE) != None:
             # trim spaces at the start
             line = line.strip()
             spacesplited = line.split(" ")
@@ -109,7 +112,7 @@ def renameRPoints(lines, r_points, pre="x", step=10, start=10):
         p_name_new = f'{pre}{p_number}'
         for i, line in enumerate(file1):
             pattern = rf'{point}[:|,]'
-            if re.search(pattern, line) != None:
+            if re.search(pattern, line, re.IGNORECASE) != None:
                 file1[i] = line.replace(point, p_name_new)
         p_number += step   
     return file1
@@ -129,12 +132,12 @@ def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
     f_done = False
     r_done = False
     for i, line in enumerate(file):
-        if bool(re.search(start_pattern, line)):
+        if bool(re.search(start_pattern, line, re.IGNORECASE)):
             if start_line == 0:
                 start_line = i
-        if bool(re.search(stop_pattern, line)):
+        if bool(re.search(stop_pattern, line, re.IGNORECASE)):
             if stop_line == 0:
-                stop_line = i
+                stop_line = i - 1
                 break
     for i, line in enumerate(file):
         if i >= start_line and i <= stop_line:
@@ -153,7 +156,7 @@ def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
                     new_file.append(l)
                 for r in r_points:
                     for coord in coordiantes:
-                        if bool(re.search(r, coord.name)):
+                        if bool(re.search(r, coord.name, re.IGNORECASE)):
                             new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
                             break
                 new_file.append("\n")
@@ -174,17 +177,26 @@ def writeNewFile(prepath, path, lines):
     
 for file in os.listdir(path):
     if file.endswith(".mod"):
-        filepath = os.path.join(path, file)
-        org_file = readfile(filepath)
-        points = getPoints(org_file)
-        coordiantes = getCoordiantes(org_file)
-        p_points = getProcessPoints(org_file)
-        new_x_file = renameRPoints(org_file, points,"x",10,10)
-        x_points = getPoints(new_x_file)
-        new_file = renameRPoints(new_x_file, x_points,"p",10,10)
-        new_points = getPoints(new_file)
-        new_coordiantes = getCoordiantes(new_file)
-        test_file = sort(new_file, p_declare_list, r_declare_list, p_points, new_points, new_coordiantes)
-        writeNewFile(path, file, test_file)
-        print("done")
-        
+        try:
+            filepath = os.path.join(path, file)
+            org_file = readfile(filepath)
+            points = getPoints(org_file)
+            coordiantes = getCoordiantes(org_file)
+            p_points = getProcessPoints(org_file)
+            new_x_file = renameRPoints(org_file, points,"x",10,10)
+            x_points = getPoints(new_x_file)
+            new_file = renameRPoints(new_x_file, x_points,"p",10,10)
+            new_points = getPoints(new_file)
+            new_coordiantes = getCoordiantes(new_file)
+            test_file = sort(new_file, p_declare_list, r_declare_list, p_points, new_points, new_coordiantes)
+            writeNewFile(path, file, test_file)
+            print("done")
+        except:
+            print(f"Problem in File: {file}")
+            try:
+                os.makedirs(f"{start_path}/logs")
+            except:
+                print("logs allready exists")
+            timestr = time.strftime("%Y%m%d_%H%M%S")
+            with open(f"{start_path}/logs/{timestr}_error.txt", 'a') as f:
+                f.write(f"Problems in File: {file}\n")
