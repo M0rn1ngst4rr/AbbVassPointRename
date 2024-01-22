@@ -16,11 +16,12 @@ class pointClass:
 
 def getProcessPoints(lines):
     # SM, KE, CZ, KL, KE
-    pattern = r"[N|C|K|S][Z|E|L|M][_][P|L][T|I][P|N]"
+    pattern = r"[N|C|K|S][Z|E|M][_][P|L][T|I][P|N]"
     pattern2 = r"Move"
     pattern3 = r"[S][e][a][r][c][h][L][I][N][_][M]"
     pattern4 = r"[O][f|F][f|F]"
     pattern5 = r"pInPos"
+    pattern6 = r"[K][L][_][P|L][T|I][P|N]"
     points = list()
     for line in lines:
         if re.search(pattern, line, re.IGNORECASE) != None:
@@ -29,7 +30,8 @@ def getProcessPoints(lines):
             # get after space
             splitted = line.split(" ")
             name = splitted[1].split(",")[0].split("\\")[0]
-            points.append(name)
+            if not points.__contains__(name):
+                    points.append(name)
         elif re.search(pattern2, line, re.IGNORECASE) != None:
             test = re.search(pattern4, line, re.IGNORECASE)
             test2 = re.search(pattern5, line, re.IGNORECASE)
@@ -55,7 +57,20 @@ def getProcessPoints(lines):
             # get after space
             splitted = line.split(" ")
             name = splitted[1].split(",")[0].split("\\")[0]
-            points.append(name)
+            if not points.__contains__(name):
+                    points.append(name)
+        elif re.search(pattern6, line, re.IGNORECASE):
+            # trim spaces at the start
+            line = line.strip()
+            # get after space
+            try:
+                splitted = line.split(" ")
+                test123 = splitted[1]
+            except:
+                splitted = line.split(",")
+            name = splitted[1].split(",")[0].split("\\")[0]
+            if not points.__contains__(name):
+                    points.append(name)
     return points
 
 def getPoints(lines):
@@ -112,7 +127,7 @@ def renameRPoints(lines, r_points, pre="x", step=10, start=10):
         p_name_new = f'{pre}{p_number}'
         for i, line in enumerate(file1):
             pattern = rf'{point}[:|,]'
-            if re.search(pattern, line, re.IGNORECASE) != None:
+            if re.search(pattern, line) != None:
                 file1[i] = line.replace(point, p_name_new)
         p_number += step   
     return file1
@@ -174,6 +189,33 @@ def writeNewFile(prepath, path, lines):
     file = os.path.join(pre, path)
     with open(file, 'w') as f:
         f.writelines(lines)
+        
+def findUnused(ppoints, rpoints, coords):
+    unused = list()
+    for coord in coords:
+        found = False
+        for p in ppoints:
+            if coord.name == p:
+                found = True
+                break
+        for p in rpoints:
+            if coord.name == p:
+                found = True
+                break
+        if not found:
+            unused.append(coord.name)
+    return unused
+
+def cleanup(org_file, unused):
+    new_file = list()
+    for line in org_file:
+        found = False
+        for p in unused:
+            if line.__contains__(p):
+                found = True
+        if not found:
+            new_file.append(line)
+    return new_file
     
 for file in os.listdir(path):
     if file.endswith(".mod"):
@@ -183,7 +225,9 @@ for file in os.listdir(path):
             points = getPoints(org_file)
             coordiantes = getCoordiantes(org_file)
             p_points = getProcessPoints(org_file)
-            new_x_file = renameRPoints(org_file, points,"x",10,10)
+            unused = findUnused(p_points, points, coordiantes)
+            cleaned_up = cleanup(org_file, unused)
+            new_x_file = renameRPoints(cleaned_up, points,"x",10,10)
             x_points = getPoints(new_x_file)
             new_file = renameRPoints(new_x_file, x_points,"p",10,10)
             new_points = getPoints(new_file)
@@ -191,12 +235,13 @@ for file in os.listdir(path):
             test_file = sort(new_file, p_declare_list, r_declare_list, p_points, new_points, new_coordiantes)
             writeNewFile(path, file, test_file)
             print("done")
-        except:
-            print(f"Problem in File: {file}")
+        except Exception as e:
+            print(f"Problem in File: {file} -> {e}")
             try:
                 os.makedirs(f"{start_path}/logs")
             except:
                 print("logs allready exists")
             timestr = time.strftime("%Y%m%d_%H%M%S")
             with open(f"{start_path}/logs/{timestr}_error.txt", 'a') as f:
-                f.write(f"Problems in File: {file}\n")
+                f.write(f"Problem in File: {file} -> {e}\n")
+        
