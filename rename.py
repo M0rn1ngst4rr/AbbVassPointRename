@@ -177,7 +177,7 @@ def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
                     new_file.append(l)
                 for p in p_points:
                     for coord in coordiantes:
-                        if bool(re.search(p, coord.name, re.IGNORECASE)):
+                        if bool(re.fullmatch(p, coord.name, re.IGNORECASE)):
                             new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
                             break
                 new_file.append("\n")
@@ -187,7 +187,7 @@ def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
                     new_file.append(l)
                 for r in r_points:
                     for coord in coordiantes:
-                        if bool(re.search(r, coord.name, re.IGNORECASE)):
+                        if bool(re.fullmatch(r, coord.name, re.IGNORECASE)):
                             new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
                             break
                 new_file.append("\n")
