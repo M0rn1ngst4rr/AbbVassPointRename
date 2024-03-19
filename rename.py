@@ -15,8 +15,8 @@ class pointClass:
     coordinates = ""
 
 def getProcessPoints(lines):
-    # SM, KE, CZ, KL, KE, RE, SearchLine, Off, pInPos, Move
-    pattern = r"[N|C|K|S][Z|E|M][_][P|L][T|I][P|N]"
+    # SM, KE, CZ, KL, KE, RE, SearchLine, Off, pInPos, Move, MS
+    pattern = r"[N|C|K|S|M][Z|E|M|S][_][P|L][T|I][P|N]"
     pattern2 = r"Move"
     pattern3 = r"[S][e][a][r][c][h][L][I][N][_][M]"
     pattern4 = r"[O][f|F][f|F]"
