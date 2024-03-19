@@ -15,13 +15,14 @@ class pointClass:
     coordinates = ""
 
 def getProcessPoints(lines):
-    # SM, KE, CZ, KL, KE
+    # SM, KE, CZ, KL, KE, RE, SearchLine, Off, pInPos, Move
     pattern = r"[N|C|K|S][Z|E|M][_][P|L][T|I][P|N]"
     pattern2 = r"Move"
     pattern3 = r"[S][e][a][r][c][h][L][I][N][_][M]"
     pattern4 = r"[O][f|F][f|F]"
     pattern5 = r"pInPos"
     pattern6 = r"[K][L][_][P|L][T|I][P|N]"
+    pattern7 = r"[R][E][_][P|L][T|I][P|N]"
     points = list()
     for line in lines:
         if re.search(pattern, line, re.IGNORECASE) != None:
@@ -70,6 +71,21 @@ def getProcessPoints(lines):
                 splitted = line.split(",")
             name = splitted[1].split(",")[0].split("\\")[0]
             if not points.__contains__(name):
+                    points.append(name)
+        elif re.search(pattern7, line, re.IGNORECASE) != None:
+            # trim spaces at the start
+            line = line.strip()
+            # get after space
+            splitted = line.split(" ")
+            # check if it has \start \end else do normal
+            if len(splitted) > 1:
+                name = splitted[1].split(",")[0].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name)
+            else:
+                splitted2 = line.split(",")
+                name = splitted2[1]
+                if not points.__contains__(name):
                     points.append(name)
     return points
 
@@ -244,4 +260,3 @@ for file in os.listdir(path):
             timestr = time.strftime("%Y%m%d_%H%M%S")
             with open(f"{start_path}/logs/{timestr}_error.txt", 'a') as f:
                 f.write(f"Problem in File: {file} -> {e}\n")
-        
