@@ -23,6 +23,9 @@ def getProcessPoints(lines):
     pattern5 = r"pInPos"
     pattern6 = r"[K][L][_][P|L][T|I][P|N]"
     pattern7 = r"[R][E][_][P|L][T|I][P|N]"
+    pattern8 = r"[S][M][_][P|L][T|I][P|N]"
+    pattern9 = r"pKG"
+    pattern10= r"pSuchPos"
     points = list()
     for line in lines:
         if re.search(pattern, line, re.IGNORECASE) != None:
@@ -36,6 +39,7 @@ def getProcessPoints(lines):
         elif re.search(pattern2, line, re.IGNORECASE) != None:
             test = re.search(pattern4, line, re.IGNORECASE)
             test2 = re.search(pattern5, line, re.IGNORECASE)
+            test3 = re.search(pattern9, line, re.IGNORECASE)
             if test != None:
                 # trim spaces at the start
                 line = line.strip()
@@ -45,6 +49,14 @@ def getProcessPoints(lines):
                 if not points.__contains__(name):
                     points.append(name) 
             elif test2 != None:
+                # trim spaces at the start
+                line = line.strip()
+                # get after space
+                splitted = line.split(" ")
+                name = splitted[1].split(",")[0].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name) 
+            elif test3 != None:
                 # trim spaces at the start
                 line = line.strip()
                 # get after space
@@ -87,18 +99,62 @@ def getProcessPoints(lines):
                 name = splitted2[1]
                 if not points.__contains__(name):
                     points.append(name)
+        elif re.search(pattern8, line, re.IGNORECASE) != None:
+            # trim spaces at the start
+            line = line.strip()
+            # get after space
+            splitted = line.split(" ")
+            # check if it has \start \end else do normal
+            if len(splitted) > 1:
+                name = splitted[1].split(",")[0].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name)
+            else:
+                splitted2 = line.split(",")
+                name = splitted2[1]
+                if not points.__contains__(name):
+                    points.append(name)
+        elif re.search(pattern9, line, re.IGNORECASE) != None:
+            # trim spaces at the start
+            line = line.strip()
+            # get after space
+            splitted = line.split(" ")
+            # check if it has \start \end else do normal
+            if len(splitted) > 1:
+                name = splitted[1].split(",")[0].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name)
+        elif re.search(pattern10, line, re.IGNORECASE) != None:
+            # trim spaces at the start
+            line = line.strip()
+            # get after space
+            splitted = line.split(" ")
+            # check if it has \start \end else do normal
+            if len(splitted) > 1:
+                name = splitted[1].split(",")[0].split("\\")[0]
+                if not points.__contains__(name):
+                    points.append(name)
+            else:
+                splitted2 = line.split(",")
+                name = splitted2[1]
+                if not points.__contains__(name):
+                    points.append(name)
     return points
 
 def getPoints(lines):
     pattern = "Move"
     pattern2 = r"[O][F][F][S]"
     pattern3 = r"pinpos"
+    pattern4 = r"pKG"
+    pattern5 = r"pSuchPos"
     points = list()
     for line in lines:
         if re.search(pattern, line, re.IGNORECASE) != None:
             test1 = re.search(pattern2, line, re.IGNORECASE)
             test2 = re.search(pattern3, line, re.IGNORECASE)
-            if test1 == None and test2 == None:
+            test3 = re.search(pattern4, line, re.IGNORECASE)
+            test4 = re.search(pattern5, line, re.IGNORECASE)
+            if test1 == None and test2 == None and test3 == None and test4 == None:
                 # trim spaces at the start
                 line = line.strip()
                 # get after space
@@ -111,6 +167,7 @@ def getPoints(lines):
 def getCoordiantes(lines):
     pattern = "LOCAL CONST robtarget"
     pattern2 = "LOCAL VAR robtarget"
+    pattern3 = r"pKG"
     coordianteslist = list()
     for line in lines:
         if re.search(pattern, line, re.IGNORECASE) != None:
@@ -127,8 +184,17 @@ def getCoordiantes(lines):
             # trim spaces at the start
             line = line.strip()
             spacesplited = line.split(" ")
-            name = spacesplited[3].split(":")[0]
-            coords = spacesplited[3].split(":")[1].replace("=","")
+            if re.search(pattern3, line, re.IGNORECASE) != None:
+                name = spacesplited[3].split(";")[0]
+                coords = ""
+                try:
+                    if len(spacesplited[3].split(":")) >= 3:
+                        coords = spacesplited[3].split(":")[1].replace("=","")
+                except:
+                    pass
+            else:
+                name = spacesplited[3].split(":")[0]
+                coords = spacesplited[3].split(":")[1]
             point = pointClass()
             point.name = name
             point.coordinates = coords
@@ -178,7 +244,10 @@ def sort(file, p_declare, r_declare, p_points, r_points, coordiantes):
                 for p in p_points:
                     for coord in coordiantes:
                         if bool(re.fullmatch(p, coord.name, re.IGNORECASE)):
-                            new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
+                            if coord.coordinates != "":
+                                new_file.append(f'{coord.spaces}{coord.prename} {coord.name}:={coord.coordinates}\n')
+                            else:
+                                new_file.append(f'{coord.spaces}{coord.prename} {coord.name};\n')
                             break
                 new_file.append("\n")
                 f_done = True
